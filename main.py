@@ -31,6 +31,22 @@ def validate(text):
     return None
 
 
+def write_entry(path, text):
+    """Write text to path and verify the bytes round-trip.
+
+    Returns (byte_count, error): byte_count is the number of bytes
+    written on success; on failure byte_count is None and error is
+    a message string.
+    """
+    with open(path, "w", encoding="utf-8", newline="") as f:
+        f.write(text)
+    with open(path, "rb") as f:
+        data = f.read()
+    if data.decode("utf-8") != text:
+        return None, "round-trip mismatch"
+    return len(data), None
+
+
 def main():
     err = validate(ENTRY)
     if err:
@@ -39,14 +55,11 @@ def main():
     out_dir = "/output"
     os.makedirs(out_dir, exist_ok=True)
     out_path = os.path.join(out_dir, "entry.txt")
-    with open(out_path, "w", encoding="utf-8", newline="") as f:
-        f.write(ENTRY)
-    with open(out_path, "rb") as f:
-        data = f.read()
-    if data.decode("utf-8") != ENTRY:
-        print("round-trip mismatch", file=sys.stderr)
+    nbytes, err = write_entry(out_path, ENTRY)
+    if err:
+        print(err, file=sys.stderr)
         return 1
-    print("wrote %d bytes to %s" % (len(data), out_path))
+    print("wrote %d bytes to %s" % (nbytes, out_path))
     return 0
 
 
